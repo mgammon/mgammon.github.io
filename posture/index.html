@@ -54,7 +54,25 @@
     </div>
   </body>
   <script>
-    const synth = window.speechSynthesis;
+    const synthesis = window.speechSynthesis;
+    var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 0;
+    recognition.onresult = function(event) {
+      var transcript = event.results[0][0].transcript.toLowerCase();
+      console.log(transcript);
+      if (transcript.includes('good')){
+        onGood();
+      } else if (transcript.includes('bad')){
+        onBad();
+      }
+    }
+    recognition.onspeechend = function() {
+      recognition.stop();
+    }
 
     // DOM elements
     const goodButton = document.getElementById('good');
@@ -84,12 +102,13 @@
 
     function speak(){
       const utter = new SpeechSynthesisUtterance("How was your posture?");
-      const allVoices = synth.getVoices();
+      const allVoices = synthesis.getVoices();
       utter.voice = allVoices[Math.floor(Math.random() * allVoices.length)];
-      synth.speak(utter);
+      synthesis.speak(utter);
     }
 
-    function onClick(minutes){
+    function onAnswer(minutes){
+      recognition.stop();
       // Clicked a button, set the next check and show the countdown
       toggle();
       const ms = minutes * 1000 * 60;
@@ -98,10 +117,13 @@
       setTimeout(() => {
         // Time's up, show the form and alert with the audio
         speak();
+        recognition.start();
         toggle();
       }, ms);
     }
-    goodButton.onclick = () => onClick(30);
-    badButton.onclick = () => onClick(5);
+    const onGood = () => onAnswer(30);
+    const onBad = () => onAnswer(5);
+    goodButton.onclick = () => onGood();
+    badButton.onclick = () => onBad();
   </script>
 </html>
