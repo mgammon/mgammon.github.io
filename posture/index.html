@@ -4,22 +4,20 @@
     <style>
       * {
         font-family: Sans-Serif;
+        line-height:1.33
       }
-
       body, html {
         height: 100%;
         display: grid;
         margin:0;
         padding:0;
       }
-
       .center {
         display: flex;
         justify-content: center;
         align-items: center;
         text-align:center;
       }
-
       button {
         font-size: 20px;
         font-weight:600;
@@ -41,9 +39,15 @@
       .red:hover {
         background:darkred;
       }
+      p{ max-width:30em;}
     </style>
   </head>
   <body class="center">
+    <div id="intro">
+      <h1>How's your posture?</h1>
+      <p style="text-align:left">Get reminders to check your posture based on how you're doing!  You'll get a sound notification asking how you did.  If you've enabled your microphone, you can say "Good" or "Bad".</p>
+      <button class="green" id="start">Start</button>
+    </div>
     <div id="form">
       <h1>How was your posture?</h1>
       <button class="green" id="good">Good</button>
@@ -54,6 +58,7 @@
     </div>
   </body>
   <script>
+    // Speech setup
     const synthesis = window.speechSynthesis;
     var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
@@ -66,22 +71,30 @@
       console.log(transcript);
       if (transcript.includes('good')){
         onGood();
-      } else if (transcript.includes('bad')){
+      } else if (transcript.includes('bad') || transcript.includes('poor')){
         onBad();
       }
     }
     recognition.onspeechend = function() {
       recognition.stop();
     }
+    
+    // Sound notification
+    function speak(){
+      const utter = new SpeechSynthesisUtterance("How was your posture?");
+      const allVoices = synthesis.getVoices();
+      utter.voice = allVoices[Math.floor(Math.random() * allVoices.length)];
+      synthesis.speak(utter);
+    }
 
     // DOM elements
-    const goodButton = document.getElementById('good');
-    const badButton = document.getElementById('bad');
+    const intro = document.getElementById('intro');
     const form = document.getElementById('form');
     const countdown = document.getElementById('countdown');
 
     // Toggle form and countdown, hiding countdown initially
     countdown.style.display = 'none';
+    form.style.display = 'none';
     function toggle(el) {
       const toggle = (el) => (el.style.display = el.style.display === 'none' ? 'block' : 'none');
       toggle(form);
@@ -100,13 +113,9 @@
     }
     setInterval(setTimeLeft, 100);
 
-    function speak(){
-      const utter = new SpeechSynthesisUtterance("How was your posture?");
-      const allVoices = synthesis.getVoices();
-      utter.voice = allVoices[Math.floor(Math.random() * allVoices.length)];
-      synthesis.speak(utter);
-    }
-
+    // Good and Bad buttons
+    document.getElementById('good').onclick = () => onGood();
+    document.getElementById('bad').onclick = () => onBad();
     function onAnswer(minutes){
       recognition.stop();
       // Clicked a button, set the next check and show the countdown
@@ -123,7 +132,16 @@
     }
     const onGood = () => onAnswer(30);
     const onBad = () => onAnswer(5);
-    goodButton.onclick = () => onGood();
-    badButton.onclick = () => onBad();
+    
+    // Start button
+    recognition.start();
+    recognition.stop();
+    document.getElementById('start').onclick = start;
+    function start(){
+      intro.style.display = 'none';
+      form.style.display = 'block';
+      speak();
+      recognition.start();
+    }
   </script>
 </html>
